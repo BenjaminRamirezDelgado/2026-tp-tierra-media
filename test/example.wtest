@@ -1,9 +1,0 @@
-import example.*
-
-describe "Basic Wollok tests" {
-	
-	test "Wollok is wolloktastic" {
-		assert.equals('I am Wolloktastic!', wollok.howAreYou())
-	}
-	
-}

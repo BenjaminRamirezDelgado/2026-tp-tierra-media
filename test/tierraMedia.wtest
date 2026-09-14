@@ -1,0 +1,159 @@
+import tierraMedia.*
+
+object arma100 { method poderOtorgado(g) = 100 }
+object arma150 { method poderOtorgado(g) = 150 }
+object guerreroPoderoso { method poder() = 3000 }
+object guerreroDebil { method poder() = 100 }
+
+describe "Tests de la Tierra Media" {
+
+    test "baculo para un guerrero con mucha vida" {
+        gandalf.vidaActual(100)
+        baculo.poderBase(250)
+        assert.equals(250, baculo.poderOtorgado(gandalf))
+    }
+
+    test "baculo para un guerrero con poca vida tiene tope" {
+        gandalf.vidaActual(5) 
+        baculo.poderBase(250) 
+        assert.equals(400, baculo.poderOtorgado(gandalf))
+    }
+
+    test "baculo de poder base 100 para un guerrero con poca vida" {
+        gandalf.vidaActual(5)
+        baculo.poderBase(100) 
+        assert.equals(200, baculo.poderOtorgado(gandalf))
+    }
+
+    test "espada elfica para cualquier guerrero" {
+        espada.magia(magiaElfica)
+        assert.equals(250, espada.poderOtorgado(gandalf))
+    }
+
+    test "espada enana para un guerrero de vida 100" {
+        gandalf.vidaActual(100)
+        espada.magia(magiaEnana)
+        assert.equals(500, espada.poderOtorgado(gandalf))
+    }
+
+    test "flecha aluminio" {
+        flechaAluminio.poder(50)
+        assert.equals(50, flechaAluminio.poderOtorgado(gandalf))
+    }
+
+    test "flecha hierro sin oxidar" {
+        flechaHierro.estaOxidada(false)
+        assert.equals(70, flechaHierro.poderOtorgado(gandalf))
+    }
+
+    test "flecha hierro oxidada" {
+        flechaHierro.oxidar()
+        assert.equals(35, flechaHierro.poderOtorgado(gandalf))
+    }
+
+    test "flecha de bronce lustrada el 01/01 y usada el 05/01" {
+        flechaBronce.fechaLustrado(new Date(day=1, month=1, year=2024))
+        flechaBronce.fechaUso(new Date(day=5, month=1, year=2024))
+        assert.equals(96, flechaBronce.poderOtorgado(gandalf))
+    }
+
+    test "flecha de bronce lustrada el 01/01 y usada el 05/09" {
+        flechaBronce.fechaLustrado(new Date(day=1, month=1, year=2024))
+        flechaBronce.fechaUso(new Date(day=5, month=9, year=2024))
+        assert.equals(0, flechaBronce.poderOtorgado(gandalf))
+    }
+
+    test "caja con flecha aluminio, hierro sin oxidar y bronce" {
+        flechaAluminio.poder(50) 
+        flechaHierro.estaOxidada(false) 
+        flechaBronce.fechaLustrado(new Date(day=1, month=1, year=2024))
+        flechaBronce.fechaUso(new Date(day=5, month=1, year=2024)) 
+        
+        cajaFlechas.flechas([flechaAluminio, flechaHierro, flechaBronce])
+        assert.equals(83, cajaFlechas.poderOtorgado(gandalf))
+    }
+
+    test "poder de gandalf con vida 100 y 2 armas" {
+        gandalf.vidaActual(100)
+        gandalf.armas([arma100, arma150])
+        assert.equals(2000, gandalf.poder())
+    }
+
+    test "poder de gandalf con vida 5 y 2 armas" {
+        gandalf.vidaActual(5) 
+        gandalf.armas([arma100, arma150])
+        assert.equals(1500, gandalf.poder())
+    }
+
+    test "gandalf pasa por lebennin" {
+        gandalf.vidaActual(100)
+        gandalf.armas([baculo, espada]) 
+        lebennin.consecuencia(gandalf) 
+        assert.equals(100, gandalf.vida())
+    }
+
+    test "guerrero con poder 3000 puede pasar por lebennin" {
+        lebennin.cantidadGuardias(4) 
+        assert.equals(true, lebennin.puedePasar(guerreroPoderoso))
+    }
+
+    test "guerrero con poder 100 puede pasar por lebennin" {
+        assert.equals(false, lebennin.puedePasar(guerreroDebil))
+    }
+
+    test "personaje armado puede pasar minas tirith" {
+        gandalf.armas([baculo])
+        assert.equals(true, minasTirith.puedePasar(gandalf))
+    }
+
+    test "personaje desarmado puede pasar minas tirith" {
+        gandalf.armas([]) 
+        assert.equals(false, minasTirith.puedePasar(gandalf))
+    }
+
+    test "gandalf armado pasa por minas tirith" {
+        gandalf.vidaActual(100)
+        gandalf.armas([baculo, espada])
+        minasTirith.consecuencia(gandalf)
+        assert.equals(80, gandalf.vida()) 
+    }
+
+    test "gandalf puede pasar lossarnach" {
+        assert.equals(true, lossarnach.puedePasar(gandalf))
+    }
+
+    test "gandalf armado pasa por lossarnach" {
+        gandalf.vidaActual(100)
+        gandalf.armas([baculo, espada])
+        lossarnach.consecuencia(gandalf)
+        assert.equals(104, gandalf.vida()) 
+    }
+
+    test "gandalf puede atravesar el camino compuesto por lebennin y minas tirith" {
+        gandalf.vidaActual(100)
+        gandalf.armas([baculo, espada]) 
+        caminoDeGondor.recorrido([lebennin, minasTirith])
+        
+        assert.equals(true, caminoDeGondor.puedeRecorrer(gandalf))
+    }
+
+    test "gandalf atraviesa el camino compuesto por lebennin y minas tirith" {
+        gandalf.vidaActual(100)
+        gandalf.armas([baculo, espada])
+        caminoDeGondor.recorrido([lebennin, minasTirith])
+        
+        caminoDeGondor.consecuencia(gandalf)
+        assert.equals(80, gandalf.vida())
+    }
+
+    test "tom puede atravesar lebennin" {
+        assert.equals(true, lebennin.puedePasar(tomBombadil))
+    }
+
+    test "tom atraviesa el camino que pasa por gondor" {
+        tomBombadil.vidaActual(100)
+        caminoDeGondor.recorrido([lebennin, minasTirith])
+        caminoDeGondor.consecuencia(tomBombadil)
+        assert.equals(100, tomBombadil.vida())
+    }
+}
