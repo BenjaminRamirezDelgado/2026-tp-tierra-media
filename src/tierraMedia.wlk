@@ -3,7 +3,7 @@
 // ==========================================
 
 class Espada {
-    var property multiplicador = 1
+    var property multiplicador
 
     method poderOtorgado(unGuerrero) = multiplicador * unGuerrero.valorOrigen()
 }
@@ -19,8 +19,8 @@ class Baculo {
 }
 
 class Hacha {
-    var property largoMango = 50
-    var property pesoHoja = 5
+    var property largoMango 
+    var property pesoHoja 
 
     method poderOtorgado(unGuerrero) = largoMango * pesoHoja
 }
@@ -33,6 +33,10 @@ class Guerrero {
     var property vidaActual = 100
     var property armas = []
     var property elementos = []
+    var property tactica 
+    var property umbral 
+    var property archienemigo
+    var property mejoramigo 
 
     method vida() = vidaActual
 
@@ -62,11 +66,9 @@ class Guerrero {
     method ganarVida(cantidad) {
         vidaActual += cantidad
     }
-
-    // Por defecto ("Cualquier otro"): 10 veces la cantidad de armas que lleve
+  
+    method poder (){}
     method valorOrigen() = 10 * self.cantidadDeArmas()
-
-    method poder()
 
     // Polimorfismo con Grupo para recorrer zonas, caminos y regiones
     method todosCumplen(condicion) = condicion.apply(self)
@@ -82,6 +84,32 @@ class Guerrero {
     method atravesar(unDestino) {
         unDestino.atravesar(self)
     }
+    
+    method enfrentamiento (oponente){
+    tactica.enfrentamiento(self, oponente)
+    }
+    method atacar (oponente){
+        oponente.perderVida (self.poder()*0.10)
+    }
+    
+    method leConvieneAtacar (oponente) = oponente.poder() <= umbral
+    method estaVivo () = vidaActual > 0
+    
+    method armaMaspoderosa (){
+        armas.max({arma => arma.poderOtorgado(self)})
+    }
+    method sacarArmamasPoderosa (){
+        if (self.estaArmado()){
+            armas.remove(self.armaMaspoderosa())
+        }
+    }
+    method aplicarPenalidad(penalidad) {
+        penalidad.aplicar(self)
+    }
+    method duplicarVida() {
+    vidaActual = (vidaActual * 2).min(100)
+}
+    method tienemuchasArmas () = self.cantidadDeArmas() > 3
 }
 
 class Hobbit inherits Guerrero {
@@ -90,7 +118,7 @@ class Hobbit inherits Guerrero {
 }
 
 class Enano inherits Guerrero {
-    var property factorDePoder = 1
+    var property factorDePoder 
 
     override method valorOrigen() = 20
 
@@ -103,7 +131,7 @@ object elfo {
 }
 
 class Elfo inherits Guerrero {
-    var property destrezaPropia = 1
+    var property destrezaPropia 
 
     override method valorOrigen() = 25
 
@@ -122,7 +150,7 @@ class Elfo inherits Guerrero {
 }
 
 class Humano inherits Guerrero {
-    var property limitadorDePoder = 1
+    var property limitadorDePoder
 
     override method valorOrigen() = 15
 
@@ -144,8 +172,8 @@ class Maiar inherits Guerrero {
 }
 
 object gollum inherits Hobbit {
-    override method poder() = super() / 2
-}
+    override method poder() = super() / 2 }
+
 
 object tomBombadil inherits Guerrero {
     override method poder() = 10000000
@@ -156,6 +184,7 @@ object tomBombadil inherits Guerrero {
 
     override method perderVida(cantidad) { }
 }
+
 
 // ==========================================
 // GRUPOS DE GUERREROS
@@ -184,7 +213,11 @@ class Grupo {
     method atravesar(unDestino) {
         unDestino.atravesar(self)
     }
+    method aplicarPenalidad(penalidad) {
+        guerreros.forEach({ guerrero => guerrero.aplicarPenalidad(penalidad) })
+    }
 }
+
 
 // ==========================================
 // REQUERIMIENTOS DE ZONA
@@ -195,8 +228,8 @@ object sinRequerimiento {
 }
 
 class RequerimientoDeElemento {
-    var property cantidad = 1
-    var property elemento = "Lembas"
+    var property cantidad 
+    var property elemento 
 
     method cumple(alguien) = alguien.cantidadDeElemento(elemento) >= cantidad
 }
@@ -211,21 +244,21 @@ class RequerimientoDeGuerrero {
 }
 
 class RequerimientoMasDeArmas inherits RequerimientoDeGuerrero {
-    var property cantidadMinima = 2
+    var property cantidadMinima 
 
     override method cumpleGuerrero(unGuerrero) =
         unGuerrero.cantidadDeArmas() > cantidadMinima
 }
 
 class RequerimientoMasDePoder inherits RequerimientoDeGuerrero {
-    var property poderMinimo = 1000
+    var property poderMinimo
 
     override method cumpleGuerrero(unGuerrero) =
         unGuerrero.poder() > poderMinimo
 }
 
 class RequerimientoMasDeVida inherits RequerimientoDeGuerrero {
-    var property vidaMinima = 50
+    var property vidaMinima 
 
     override method cumpleGuerrero(unGuerrero) =
         unGuerrero.vida() > vidaMinima
@@ -258,7 +291,7 @@ class Zona {
 
     method atravesar(alguien) {
         self.validarPasar(alguien)
-        self.consecuencia(alguien)
+        self.consecuencia(alguien)  
     }
 }
 
@@ -292,7 +325,7 @@ object lossarnach inherits Zona {
 
 class Camino {
     var property zonas = [lebennin, minasTirith]
-
+    var property penalidad
     method recorrido() = zonas
 
     method recorrido(nuevasZonas) {
@@ -305,6 +338,7 @@ class Camino {
 
     method validarRecorrido(alguien) {
         if (!self.puedePasar(alguien)) {
+            alguien.aplicarPenalidad(penalidad)
             self.error("No se cumplen las condiciones para recorrer el camino")
         }
     }
@@ -344,4 +378,120 @@ class Region {
 }
 
 object gondor inherits Region {
+}
+
+// parte 3
+
+object tacticaAgil {
+    method enfrentamiento (atacante,oponente) {
+    oponente.perderVida ((atacante.poder() + 100 )* 0.10)
+    if (oponente.estaVivo()) {
+        oponente.atacar (atacante)
+    }
+    }
+}
+
+
+object tacticaDeResistencia {
+     method enfrentamiento (atacante,oponente){
+    atacante.perderVida((oponente.poder() * 0.10)/2)
+    if(atacante.estaVivo()){
+        atacante.atacar(oponente)
+    }
+     }
+}
+
+object tacticaCaruso {
+    method enfrentamiento (atacante, oponente){
+    if (atacante.leConvieneAtacar(oponente)) {
+        atacante.atacar (oponente)
+        if (oponente.estaVivo()){
+            oponente.atacar(atacante)
+        }
+    }
+    else {atacante.perderVida(10)}
+}
+}
+
+object laCuatroTresTres {
+    method enfrentamiento (atacante, oponente){
+        atacante.atacar(oponente)
+         if (oponente.estaVivo()) {
+            atacante.atacar(oponente)
+        }
+         if (atacante.vidaActual() <= 60 && oponente.estaVivo()) {
+          oponente.atacar(atacante)  
+        }
+    }
+    }
+
+
+class Penalidad {
+    method aplicar(guerrero) {
+    }
+}
+
+object muerte inherits Penalidad {
+    override method aplicar(guerrero) {
+        guerrero.vidaActual(0)
+    }
+}
+
+object quitarArmamasPoderosa inherits Penalidad {
+    override method aplicar(guerrero) {
+        guerrero.sacarArmamasPoderosa()
+    }
+}
+
+class PerderfracciondeVida inherits Penalidad {
+    var property fraccion
+    override method aplicar(guerrero) {
+        guerrero.perderVida(guerrero.vidaActual() * fraccion)
+    }
+}
+
+class PenalidadCombinada inherits Penalidad {
+    var property penalidades = []
+    method agregar(penalidad) {
+        penalidades.add(penalidad)
+    }
+    override method aplicar(guerrero) {
+        penalidades.forEach({ penalidad => penalidad.aplicar(guerrero) })
+    }
+}
+
+class Anillo {
+    var property dueño 
+    method invocar () {
+        dueño.duplicarVida()
+        self.efectoAnillo()
+    }
+    method efectoAnillo (){
+    }
+}
+
+class AnillodeFuego inherits Anillo {
+    override method efectoAnillo (){
+    dueño.archienemigo().perderVida(20)
+    }
+}
+
+class AnilloMaldito inherits Anillo {
+    override method efectoAnillo (){
+        dueño.sacarArmamasPoderosa()
+    }
+}
+
+class AnillodeAire inherits Anillo{
+    override method efectoAnillo(){
+        dueño.mejoramigo().ganarVida(30)
+    }
+}
+
+object AnilloUnico inherits Anillo (dueño = gollum){
+    override method efectoAnillo(){
+        if (dueño.tienemuchasArmas){
+            dueño.perderVida(20)
+        } else dueño.perderVida(30)
+    }
 }
